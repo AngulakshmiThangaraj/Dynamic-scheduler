@@ -71,36 +71,36 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Social Login Event Handlers (Google / Microsoft)
+    // Direct 1-Click Social Login Event Handlers (Google / Microsoft)
     const btnGoogle = document.getElementById("btn-google-auth");
     const btnMicrosoft = document.getElementById("btn-microsoft-auth");
 
     if (btnGoogle) {
         btnGoogle.addEventListener("click", async () => {
-            const userEmail = prompt("Google Sign-In: Enter your Google Email:", "user.google@gmail.com");
-            if (!userEmail) return;
-            const userName = prompt("Enter your Full Name:", userEmail.split("@")[0].capitalize());
+            // Direct 1-Click Google Sign-In
+            const googleEmail = "user.google@gmail.com";
+            const googleName = "Google User";
             try {
-                const res = await api.socialLogin("google", userEmail, userName || "Google User");
+                const res = await api.socialLogin("google", googleEmail, googleName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
-                alert(`Google Sign-In Failed: ${err.message}`);
+                alert(`Google Sign-In Error: ${err.message}`);
             }
         });
     }
 
     if (btnMicrosoft) {
         btnMicrosoft.addEventListener("click", async () => {
-            const userEmail = prompt("Microsoft Sign-In: Enter your Microsoft/Outlook Email:", "user.ms@outlook.com");
-            if (!userEmail) return;
-            const userName = prompt("Enter your Full Name:", userEmail.split("@")[0].capitalize());
+            // Direct 1-Click Microsoft Sign-In
+            const msEmail = "user.microsoft@outlook.com";
+            const msName = "Microsoft User";
             try {
-                const res = await api.socialLogin("microsoft", userEmail, userName || "Microsoft User");
+                const res = await api.socialLogin("microsoft", msEmail, msName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
-                alert(`Microsoft Sign-In Failed: ${err.message}`);
+                alert(`Microsoft Sign-In Error: ${err.message}`);
             }
         });
     }
