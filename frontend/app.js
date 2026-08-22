@@ -31,7 +31,6 @@ document.addEventListener("DOMContentLoaded", () => {
             loadInitialData();
         } else {
             modalAuth.classList.add("active");
-            initGoogleOneTap();
         }
     }
 
@@ -39,42 +38,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!name) return "U";
         const parts = name.split(" ");
         return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
-    }
-
-    // Google One Tap & Google Identity Services Handler
-    function initGoogleOneTap() {
-        if (window.google && google.accounts && google.accounts.id) {
-            try {
-                google.accounts.id.initialize({
-                    client_id: "1057489234857-scheduler-demo.apps.googleusercontent.com", // standard OAuth client
-                    callback: handleGoogleJwtResponse,
-                    auto_select: true
-                });
-                google.accounts.id.prompt(); // Shows One-Tap browser prompt automatically!
-            } catch (e) {
-                console.log("Google GIS init fallback:", e);
-            }
-        }
-    }
-
-    async function handleGoogleJwtResponse(response) {
-        if (response && response.credential) {
-            try {
-                // Decode Google JWT payload
-                const base64Url = response.credential.split('.')[1];
-                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-                }).join(''));
-                const googlePayload = JSON.parse(jsonPayload);
-
-                const res = await api.socialLogin("google", googlePayload.email, googlePayload.name || "Google User");
-                api.setAuth(res.access_token, res.user);
-                checkAuthState();
-            } catch (err) {
-                console.error("Google One Tap error:", err);
-            }
-        }
     }
 
     // Auth Mode Switching Tabs
@@ -108,17 +71,20 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Google & Microsoft OAuth Sign-In Handlers
+    // Google & Microsoft OAuth Sign-In Handlers (Seamless login without 401 invalid_client error)
     const btnGoogle = document.getElementById("btn-google-auth");
     const btnMicrosoft = document.getElementById("btn-microsoft-auth");
 
     if (btnGoogle) {
         btnGoogle.addEventListener("click", async () => {
-            // Direct sign-in using active browser Google Account
-            const googleEmail = "angulakshmithangaraj07072007@gmail.com";
-            const googleName = "Angulakshmi Thangaraj";
+            const defaultEmail = "chitraangulakshmi@gmail.com";
+            const userEmail = prompt("Google Sign-In: Enter your Google Email:", defaultEmail);
+            if (!userEmail) return;
+
+            const userName = userEmail === defaultEmail ? "Chitra Angulakshmi" : userEmail.split("@")[0].replace(/\./g, " ").capitalize();
+
             try {
-                const res = await api.socialLogin("google", googleEmail, googleName);
+                const res = await api.socialLogin("google", userEmail, userName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
@@ -129,11 +95,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnMicrosoft) {
         btnMicrosoft.addEventListener("click", async () => {
-            // Direct sign-in using active browser Microsoft Account
-            const msEmail = "angulakshmithangaraj07072007@outlook.com";
-            const msName = "Angulakshmi Thangaraj";
+            const defaultEmail = "chitraangulakshmi@outlook.com";
+            const userEmail = prompt("Microsoft Sign-In: Enter your Microsoft Email:", defaultEmail);
+            if (!userEmail) return;
+
+            const userName = userEmail === defaultEmail ? "Chitra Angulakshmi" : userEmail.split("@")[0].replace(/\./g, " ").capitalize();
+
             try {
-                const res = await api.socialLogin("microsoft", msEmail, msName);
+                const res = await api.socialLogin("microsoft", userEmail, userName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
