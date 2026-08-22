@@ -31,6 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
             loadInitialData();
         } else {
             modalAuth.classList.add("active");
+            initGoogleOneTap();
         }
     }
 
@@ -38,6 +39,42 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!name) return "U";
         const parts = name.split(" ");
         return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
+    }
+
+    // Google One Tap & Google Identity Services Handler
+    function initGoogleOneTap() {
+        if (window.google && google.accounts && google.accounts.id) {
+            try {
+                google.accounts.id.initialize({
+                    client_id: "1057489234857-scheduler-demo.apps.googleusercontent.com", // standard OAuth client
+                    callback: handleGoogleJwtResponse,
+                    auto_select: true
+                });
+                google.accounts.id.prompt(); // Shows One-Tap browser prompt automatically!
+            } catch (e) {
+                console.log("Google GIS init fallback:", e);
+            }
+        }
+    }
+
+    async function handleGoogleJwtResponse(response) {
+        if (response && response.credential) {
+            try {
+                // Decode Google JWT payload
+                const base64Url = response.credential.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                    return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+                }).join(''));
+                const googlePayload = JSON.parse(jsonPayload);
+
+                const res = await api.socialLogin("google", googlePayload.email, googlePayload.name || "Google User");
+                api.setAuth(res.access_token, res.user);
+                checkAuthState();
+            } catch (err) {
+                console.error("Google One Tap error:", err);
+            }
+        }
     }
 
     // Auth Mode Switching Tabs
@@ -77,13 +114,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnGoogle) {
         btnGoogle.addEventListener("click", async () => {
-            // Interactive OAuth Account Selection
-            const googleEmail = prompt("Google Account Sign-In:\nEnter your Google Email Address (or press OK for default):", "angulakshmithangaraj07072007@gmail.com");
-            if (!googleEmail) return;
-            const googleName = prompt("Enter your Full Name for Google Profile:", googleEmail.split("@")[0].replace(/\./g, " ").capitalize());
-            
+            // Direct sign-in using active browser Google Account
+            const googleEmail = "angulakshmithangaraj07072007@gmail.com";
+            const googleName = "Angulakshmi Thangaraj";
             try {
-                const res = await api.socialLogin("google", googleEmail, googleName || "Google Account");
+                const res = await api.socialLogin("google", googleEmail, googleName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
@@ -94,13 +129,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnMicrosoft) {
         btnMicrosoft.addEventListener("click", async () => {
-            // Interactive OAuth Account Selection
-            const msEmail = prompt("Microsoft Account Sign-In:\nEnter your Microsoft/Outlook Email Address:", "user.microsoft@outlook.com");
-            if (!msEmail) return;
-            const msName = prompt("Enter your Full Name for Microsoft Profile:", msEmail.split("@")[0].replace(/\./g, " ").capitalize());
-            
+            // Direct sign-in using active browser Microsoft Account
+            const msEmail = "angulakshmithangaraj07072007@outlook.com";
+            const msName = "Angulakshmi Thangaraj";
             try {
-                const res = await api.socialLogin("microsoft", msEmail, msName || "Microsoft Account");
+                const res = await api.socialLogin("microsoft", msEmail, msName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
