@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+scheduler.db
+.env
+node_dist/
+*.log

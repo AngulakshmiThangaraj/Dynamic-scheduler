@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Event Scheduling & Conflict Resolver</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="brand-logo">⚡</div>
+                <div class="brand-title">Schedule Resolver</div>
+            </div>
+
+            <ul class="nav-list">
+                <li class="nav-item active" data-target="section-calendar">
+                    <span>📅</span> Calendar Views
+                </li>
+                <li class="nav-item" data-target="section-conflicts">
+                    <span>⚡</span> Conflict Center
+                    <span class="badge" id="nav-conflict-count">0</span>
+                </li>
+                <li class="nav-item" data-target="section-optimizer">
+                    <span>🎯</span> Smart Optimizer
+                </li>
+                <li class="nav-item" data-target="section-availability">
+                    <span>⚙️</span> Availability Manager
+                </li>
+                <li class="nav-item" data-target="section-rooms">
+                    <span>🏢</span> Rooms & Resources
+                </li>
+                <li class="nav-item" data-target="section-analytics">
+                    <span>📊</span> Real-Time Analytics
+                </li>
+                <li class="nav-item" data-target="section-history">
+                    <span>📜</span> Schedule History
+                </li>
+                <li class="nav-item" data-target="section-users" id="nav-users-item">
+                    <span>👥</span> User Management
+                </li>
+            </ul>
+
+            <div class="user-profile">
+                <div class="avatar" id="user-avatar-initials">SJ</div>
+                <div class="user-info">
+                    <span class="user-name" id="user-display-name">Sarah Jenkins</span>
+                    <span class="user-role" id="user-display-role">ADMIN</span>
+                </div>
+                <button class="btn-logout" id="btn-logout" title="Logout">🚪</button>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="page-header-title" id="page-title">Enterprise Event Calendar</div>
+                <div class="header-actions">
+                    <button class="btn-secondary" id="btn-notifications-toggle">
+                        🔔 Notifications <span id="notif-count-badge" class="badge">0</span>
+                    </button>
+                    <button class="btn-primary" id="btn-open-create-modal">
+                        <span>+</span> Create Event
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="content-area">
+
+                <!-- 1. CALENDAR VIEW -->
+                <section id="section-calendar" class="view-section active">
+                    <div class="calendar-controls">
+                        <div>
+                            <button class="btn-secondary" id="cal-prev">&lt;</button>
+                            <button class="btn-secondary" id="cal-today">Today</button>
+                            <button class="btn-secondary" id="cal-next">&gt;</button>
+                            <span id="cal-date-heading" style="margin-left: 1rem; font-size: 1.1rem; font-weight: 700;"></span>
+                        </div>
+                        <div class="view-selector">
+                            <button class="view-btn active" data-view="month">Month</button>
+                            <button class="view-btn" data-view="week">Week</button>
+                            <button class="view-btn" data-view="day">Day</button>
+                        </div>
+                    </div>
+
+                    <div class="calendar-grid" id="calendar-grid-container">
+                        <!-- Days and event cards rendered dynamically -->
+                    </div>
+                </section>
+
+                <!-- 2. CONFLICT CENTER VIEW -->
+                <section id="section-conflicts" class="view-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>Active Conflicts & Resolution Desk</h2>
+                        <button class="btn-primary" id="btn-refresh-conflicts">↻ Refresh Conflicts</button>
+                    </div>
+
+                    <div class="conflict-grid" id="conflicts-container">
+                        <!-- Conflict Cards rendered dynamically -->
+                    </div>
+                </section>
+
+                <!-- 3. SMART OPTIMIZER & CANDIDATE SLOTS -->
+                <section id="section-optimizer" class="view-section" style="display: none;">
+                    <h2>Smart Slot Optimizer & Weighted Scoring</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Generates alternative non-conflicting time slots ranked by weighted optimization criteria.</p>
+
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 1rem;">
+                            <div class="form-group">
+                                <label class="form-label">Target Date</label>
+                                <input type="date" id="opt-date" class="form-input">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Duration (minutes)</label>
+                                <input type="number" id="opt-duration" class="form-input" value="60">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Preferred Start Time</label>
+                                <input type="time" id="opt-pref-time" class="form-input" value="10:00">
+                            </div>
+                        </div>
+                        <button class="btn-primary" id="btn-run-optimizer">🔍 Generate Candidate Slots</button>
+                    </div>
+
+                    <div id="optimizer-results-container">
+                        <!-- Recommendations list rendered dynamically -->
+                    </div>
+                </section>
+
+                <!-- 4. AVAILABILITY MANAGER -->
+                <section id="section-availability" class="view-section" style="display: none;">
+                    <h2>Working Hours & Availability Settings</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Configure weekly working windows, lunch breaks, and unavailable periods.</p>
+
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Day of Week</th>
+                                <th>Working Start</th>
+                                <th>Working End</th>
+                                <th>Break Start</th>
+                                <th>Break End</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="availability-table-body">
+                            <!-- Availability rows -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- 5. ROOMS & RESOURCES -->
+                <section id="section-rooms" class="view-section" style="display: none;">
+                    <h2>Rooms & Equipment Resources</h2>
+                    
+                    <h3 style="margin-top: 1rem; margin-bottom: 0.5rem;">Meeting Rooms</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;" id="rooms-cards-container">
+                        <!-- Room Cards -->
+                    </div>
+
+                    <h3>Equipment Resources</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;" id="resources-cards-container">
+                        <!-- Resource Cards -->
+                    </div>
+                </section>
+
+                <!-- 6. ANALYTICS DASHBOARD -->
+                <section id="section-analytics" class="view-section" style="display: none;">
+                    <h2>Real-Time Scheduling Analytics</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 1.5rem;">Metrics computed dynamically from live database records.</p>
+
+                    <div class="analytics-grid">
+                        <div class="metric-card">
+                            <span class="metric-val" id="metric-total-events">0</span>
+                            <span class="metric-lbl">Total Events</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-val" id="metric-resolution-rate">0%</span>
+                            <span class="metric-lbl">Resolution Rate</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-val" id="metric-room-utilization">0%</span>
+                            <span class="metric-lbl">Room Utilization</span>
+                        </div>
+                        <div class="metric-card">
+                            <span class="metric-val" id="metric-auto-resolutions">0</span>
+                            <span class="metric-lbl">Auto Resolutions</span>
+                        </div>
+                    </div>
+
+                    <div style="background: var(--bg-card); padding: 1.5rem; border-radius: var(--radius-md); border: 1px solid var(--border-color);">
+                        <h3>Conflict Type Distribution</h3>
+                        <div id="analytics-conflict-breakdown" style="margin-top: 1rem;">
+                            <!-- Conflict Breakdown bars -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 7. HISTORY & AUDIT LOG -->
+                <section id="section-history" class="view-section" style="display: none;">
+                    <h2>Schedule History & Audit Log</h2>
+                    
+                    <h3 style="margin-top: 1rem;">Event Schedule Modifications</h3>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Event</th>
+                                <th>Reason</th>
+                                <th>Old Window</th>
+                                <th>New Window</th>
+                                <th>Changed By</th>
+                                <th>Timestamp</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-table-body">
+                            <!-- History rows -->
+                        </tbody>
+                    </table>
+                </section>
+
+                <!-- 8. USER MANAGEMENT (ADMIN ONLY) -->
+                <section id="section-users" class="view-section" style="display: none;">
+                    <h2>User Accounts & Role Assignments</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Users rows -->
+                        </tbody>
+                    </table>
+                </section>
+
+            </main>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Event -->
+    <div class="modal-overlay" id="modal-create-event">
+        <div class="modal-box">
+            <h2>Create New Event</h2>
+            <form id="form-create-event">
+                <div class="form-group">
+                    <label class="form-label">Event Title</label>
+                    <input type="text" id="ev-title" class="form-input" required placeholder="e.g. Q3 Architecture Sync">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea id="ev-desc" class="form-input" rows="2"></textarea>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Date</label>
+                        <input type="date" id="ev-date" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <select id="ev-priority" class="form-select">
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="CRITICAL">CRITICAL</option>
+                            <option value="HIGH">HIGH</option>
+                            <option value="LOW">LOW</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Start Time</label>
+                        <input type="time" id="ev-start" class="form-input" value="10:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Time</label>
+                        <input type="time" id="ev-end" class="form-input" value="11:00" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Room</label>
+                        <select id="ev-room" class="form-select">
+                            <!-- Rooms options -->
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                    <button type="button" class="btn-secondary" id="btn-close-create-modal">Cancel</button>
+                    <button type="submit" class="btn-primary">Submit & Check Conflicts</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: What-If Simulation Drawer -->
+    <div class="modal-overlay" id="modal-simulation">
+        <div class="modal-box">
+            <h2>⚡ What-If Schedule Simulation</h2>
+            <div id="simulation-report-content" style="margin-top: 1rem;">
+                <!-- Simulation dry run report -->
+            </div>
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn-secondary" id="btn-close-sim-modal">Close</button>
+                <button class="btn-primary" id="btn-apply-sim-changes">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Authentication -->
+    <div class="modal-overlay active" id="modal-auth">
+        <div class="modal-box" style="max-width: 420px;">
+            <h2 id="auth-title">Login to Schedule Resolver</h2>
+            <form id="form-auth" style="margin-top: 1rem;">
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="auth-email" class="form-input" required value="admin@company.com">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="auth-pass" class="form-input" required value="admin123">
+                </div>
+                <button type="submit" class="btn-primary" style="width: 100%; margin-top: 1rem;">Sign In</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="api.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
