@@ -8,7 +8,8 @@ from sqlalchemy.orm import Session
 from backend.database.schema import SessionLocal, User, init_db
 from backend.database.seed import seed_database
 
-SECRET_KEY = os.environ.get("JWT_SECRET", "super-secret-scheduling-key-2026")
+raw_secret = os.environ.get("JWT_SECRET")
+SECRET_KEY = raw_secret if (raw_secret and len(raw_secret.strip()) > 0) else "super-secret-scheduling-key-2026"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 hours
 
