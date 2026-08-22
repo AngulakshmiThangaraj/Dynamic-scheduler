@@ -1,6 +1,6 @@
-fastapi==0.128.1
-uvicorn==0.40.0
-sqlalchemy==2.0.52
-pydantic==2.12.5
-pyjwt==2.13.0
-python-multipart==0.0.32
+fastapi
+uvicorn
+sqlalchemy
+pydantic
+PyJWT
+python-multipart

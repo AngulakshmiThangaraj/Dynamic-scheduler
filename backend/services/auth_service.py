@@ -5,7 +5,8 @@ import jwt
 from fastapi import HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from backend.database.schema import SessionLocal, User
+from backend.database.schema import SessionLocal, User, init_db
+from backend.database.seed import seed_database
 
 SECRET_KEY = os.environ.get("JWT_SECRET", "super-secret-scheduling-key-2026")
 ALGORITHM = "HS256"
@@ -29,7 +30,18 @@ def create_access_token(data: dict, expires_delta: timedelta = None) -> str:
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
+_db_initialized = False
+
 def get_db():
+    global _db_initialized
+    if not _db_initialized:
+        try:
+            init_db()
+            seed_database()
+            _db_initialized = True
+        except Exception as e:
+            print(f"get_db init error: {e}")
+
     db = SessionLocal()
     try:
         yield db
