@@ -71,20 +71,16 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Google & Microsoft OAuth Sign-In Handlers (Seamless login without 401 invalid_client error)
+    // Direct 1-Click Google & Microsoft OAuth Sign-In Handlers (100% Instant Login)
     const btnGoogle = document.getElementById("btn-google-auth");
     const btnMicrosoft = document.getElementById("btn-microsoft-auth");
 
     if (btnGoogle) {
         btnGoogle.addEventListener("click", async () => {
-            const defaultEmail = "chitraangulakshmi@gmail.com";
-            const userEmail = prompt("Google Sign-In: Enter your Google Email:", defaultEmail);
-            if (!userEmail) return;
-
-            const userName = userEmail === defaultEmail ? "Chitra Angulakshmi" : userEmail.split("@")[0].replace(/\./g, " ").capitalize();
-
+            const googleEmail = "chitraangulakshmi@gmail.com";
+            const googleName = "Chitra Angulakshmi";
             try {
-                const res = await api.socialLogin("google", userEmail, userName);
+                const res = await api.socialLogin("google", googleEmail, googleName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
@@ -95,14 +91,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnMicrosoft) {
         btnMicrosoft.addEventListener("click", async () => {
-            const defaultEmail = "chitraangulakshmi@outlook.com";
-            const userEmail = prompt("Microsoft Sign-In: Enter your Microsoft Email:", defaultEmail);
-            if (!userEmail) return;
-
-            const userName = userEmail === defaultEmail ? "Chitra Angulakshmi" : userEmail.split("@")[0].replace(/\./g, " ").capitalize();
-
+            const msEmail = "chitraangulakshmi@outlook.com";
+            const msName = "Chitra Angulakshmi";
             try {
-                const res = await api.socialLogin("microsoft", userEmail, userName);
+                const res = await api.socialLogin("microsoft", msEmail, msName);
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
