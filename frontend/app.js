@@ -71,17 +71,19 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Direct 1-Click Social Login Event Handlers (Google / Microsoft)
+    // Google & Microsoft OAuth Sign-In Handlers
     const btnGoogle = document.getElementById("btn-google-auth");
     const btnMicrosoft = document.getElementById("btn-microsoft-auth");
 
     if (btnGoogle) {
         btnGoogle.addEventListener("click", async () => {
-            // Direct 1-Click Google Sign-In
-            const googleEmail = "user.google@gmail.com";
-            const googleName = "Google User";
+            // Interactive OAuth Account Selection
+            const googleEmail = prompt("Google Account Sign-In:\nEnter your Google Email Address (or press OK for default):", "angulakshmithangaraj07072007@gmail.com");
+            if (!googleEmail) return;
+            const googleName = prompt("Enter your Full Name for Google Profile:", googleEmail.split("@")[0].replace(/\./g, " ").capitalize());
+            
             try {
-                const res = await api.socialLogin("google", googleEmail, googleName);
+                const res = await api.socialLogin("google", googleEmail, googleName || "Google Account");
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
@@ -92,11 +94,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (btnMicrosoft) {
         btnMicrosoft.addEventListener("click", async () => {
-            // Direct 1-Click Microsoft Sign-In
-            const msEmail = "user.microsoft@outlook.com";
-            const msName = "Microsoft User";
+            // Interactive OAuth Account Selection
+            const msEmail = prompt("Microsoft Account Sign-In:\nEnter your Microsoft/Outlook Email Address:", "user.microsoft@outlook.com");
+            if (!msEmail) return;
+            const msName = prompt("Enter your Full Name for Microsoft Profile:", msEmail.split("@")[0].replace(/\./g, " ").capitalize());
+            
             try {
-                const res = await api.socialLogin("microsoft", msEmail, msName);
+                const res = await api.socialLogin("microsoft", msEmail, msName || "Microsoft Account");
                 api.setAuth(res.access_token, res.user);
                 checkAuthState();
             } catch (err) {
