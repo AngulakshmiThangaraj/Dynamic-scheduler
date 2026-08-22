@@ -10,4 +10,5 @@ An enterprise-grade production REST API & Interactive Dashboard for scheduling o
 - **Real-Time Analytics & Audit Log**: Dynamic metrics and historical change logs.
 
 ## Deployed URL
-- **Vercel**: [https://dynamic-scheduler-ten.vercel.app](https://dynamic-scheduler-ten.vercel.app)
+- **Vercel Application**: [https://dynamic-scheduler-ten.vercel.app](https://dynamic-scheduler-ten.vercel.app)
+- **Repository**: [https://github.com/AngulakshmiThangaraj/Dynamic-scheduler.git](https://github.com/AngulakshmiThangaraj/Dynamic-scheduler.git)
