@@ -9,6 +9,6 @@ An enterprise-grade production REST API & Interactive Dashboard for scheduling o
 - **What-If Simulation Drawer**: Test schedule changes with dry-run compatibility scoring.
 - **Real-Time Analytics & Audit Log**: Dynamic metrics and historical change logs.
 
-## Deployed URL
+## Deployed Live Applications
 - **Vercel Application**: [https://dynamic-scheduler-ten.vercel.app](https://dynamic-scheduler-ten.vercel.app)
-- **Repository**: [https://github.com/AngulakshmiThangaraj/Dynamic-scheduler.git](https://github.com/AngulakshmiThangaraj/Dynamic-scheduler.git)
+- **GitHub Repository**: [https://github.com/AngulakshmiThangaraj/Dynamic-scheduler.git](https://github.com/AngulakshmiThangaraj/Dynamic-scheduler.git)
