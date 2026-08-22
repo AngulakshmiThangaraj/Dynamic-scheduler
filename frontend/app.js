@@ -19,6 +19,31 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupRole = document.getElementById("group-role");
     const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
+    // Global Click Handlers for Google & Microsoft OAuth (100% Instant Login)
+    window.handleGoogleClick = async function() {
+        const googleEmail = "chitraangulakshmi@gmail.com";
+        const googleName = "Chitra Angulakshmi";
+        try {
+            const res = await api.socialLogin("google", googleEmail, googleName);
+            api.setAuth(res.access_token, res.user);
+            checkAuthState();
+        } catch (err) {
+            alert(`Google Sign-In Error: ${err.message}`);
+        }
+    };
+
+    window.handleMicrosoftClick = async function() {
+        const msEmail = "chitraangulakshmi@outlook.com";
+        const msName = "Chitra Angulakshmi";
+        try {
+            const res = await api.socialLogin("microsoft", msEmail, msName);
+            api.setAuth(res.access_token, res.user);
+            checkAuthState();
+        } catch (err) {
+            alert(`Microsoft Sign-In Error: ${err.message}`);
+        }
+    };
+
     // Init Auth State
     checkAuthState();
 
@@ -68,38 +93,6 @@ document.addEventListener("DOMContentLoaded", () => {
             groupFullname.style.display = "block";
             groupRole.style.display = "block";
             btnAuthSubmit.textContent = "Create Account";
-        });
-    }
-
-    // Direct 1-Click Google & Microsoft OAuth Sign-In Handlers (100% Instant Login)
-    const btnGoogle = document.getElementById("btn-google-auth");
-    const btnMicrosoft = document.getElementById("btn-microsoft-auth");
-
-    if (btnGoogle) {
-        btnGoogle.addEventListener("click", async () => {
-            const googleEmail = "chitraangulakshmi@gmail.com";
-            const googleName = "Chitra Angulakshmi";
-            try {
-                const res = await api.socialLogin("google", googleEmail, googleName);
-                api.setAuth(res.access_token, res.user);
-                checkAuthState();
-            } catch (err) {
-                alert(`Google Sign-In Error: ${err.message}`);
-            }
-        });
-    }
-
-    if (btnMicrosoft) {
-        btnMicrosoft.addEventListener("click", async () => {
-            const msEmail = "chitraangulakshmi@outlook.com";
-            const msName = "Chitra Angulakshmi";
-            try {
-                const res = await api.socialLogin("microsoft", msEmail, msName);
-                api.setAuth(res.access_token, res.user);
-                checkAuthState();
-            } catch (err) {
-                alert(`Microsoft Sign-In Error: ${err.message}`);
-            }
         });
     }
 
