@@ -39,8 +39,16 @@ class ApiClient {
 
         try {
             const res = await fetch(`${API_BASE_URL}${endpoint}`, config);
-            const data = await res.json();
+            const textResponse = await res.text();
             
+            let data;
+            try {
+                data = JSON.parse(textResponse);
+            } catch (parseError) {
+                console.error("Non-JSON Server Response:", textResponse);
+                throw new Error("Server temporary initialization error. Please retry in a few seconds.");
+            }
+
             if (!res.ok) {
                 if (res.status === 401) {
                     this.clearAuth();
@@ -65,10 +73,17 @@ class ApiClient {
         });
     }
 
-    register(email, password, full_name, role) {
+    register(email, password, full_name, role = "PARTICIPANT") {
         return this.request("/auth/register", {
             method: "POST",
             body: JSON.stringify({ email, password, full_name, role })
+        });
+    }
+
+    socialLogin(provider, email, full_name) {
+        return this.request("/auth/social-login", {
+            method: "POST",
+            body: JSON.stringify({ provider, email, full_name })
         });
     }
 

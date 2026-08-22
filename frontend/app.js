@@ -5,12 +5,19 @@ document.addEventListener("DOMContentLoaded", () => {
     let eventsList = [];
     let roomsList = [];
     let usersList = [];
+    let authMode = "login"; // "login" or "register"
 
     // Elements
     const modalAuth = document.getElementById("modal-auth");
     const formAuth = document.getElementById("form-auth");
     const modalCreate = document.getElementById("modal-create-event");
     const modalSim = document.getElementById("modal-simulation");
+
+    const tabLogin = document.getElementById("tab-login");
+    const tabRegister = document.getElementById("tab-register");
+    const groupFullname = document.getElementById("group-fullname");
+    const groupRole = document.getElementById("group-role");
+    const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
     // Init Auth State
     checkAuthState();
@@ -33,6 +40,76 @@ document.addEventListener("DOMContentLoaded", () => {
         return parts.map(p => p[0]).join("").toUpperCase().slice(0, 2);
     }
 
+    // Auth Mode Switching Tabs
+    if (tabLogin && tabRegister) {
+        tabLogin.addEventListener("click", () => {
+            authMode = "login";
+            tabLogin.classList.add("active");
+            tabLogin.style.color = "#fff";
+            tabLogin.style.borderBottom = "2px solid var(--primary)";
+            tabRegister.classList.remove("active");
+            tabRegister.style.color = "var(--text-muted)";
+            tabRegister.style.borderBottom = "none";
+
+            groupFullname.style.display = "none";
+            groupRole.style.display = "none";
+            btnAuthSubmit.textContent = "Sign In";
+        });
+
+        tabRegister.addEventListener("click", () => {
+            authMode = "register";
+            tabRegister.classList.add("active");
+            tabRegister.style.color = "#fff";
+            tabRegister.style.borderBottom = "2px solid var(--primary)";
+            tabLogin.classList.remove("active");
+            tabLogin.style.color = "var(--text-muted)";
+            tabLogin.style.borderBottom = "none";
+
+            groupFullname.style.display = "block";
+            groupRole.style.display = "block";
+            btnAuthSubmit.textContent = "Create Account";
+        });
+    }
+
+    // Social Login Event Handlers (Google / Microsoft)
+    const btnGoogle = document.getElementById("btn-google-auth");
+    const btnMicrosoft = document.getElementById("btn-microsoft-auth");
+
+    if (btnGoogle) {
+        btnGoogle.addEventListener("click", async () => {
+            const userEmail = prompt("Google Sign-In: Enter your Google Email:", "user.google@gmail.com");
+            if (!userEmail) return;
+            const userName = prompt("Enter your Full Name:", userEmail.split("@")[0].capitalize());
+            try {
+                const res = await api.socialLogin("google", userEmail, userName || "Google User");
+                api.setAuth(res.access_token, res.user);
+                checkAuthState();
+            } catch (err) {
+                alert(`Google Sign-In Failed: ${err.message}`);
+            }
+        });
+    }
+
+    if (btnMicrosoft) {
+        btnMicrosoft.addEventListener("click", async () => {
+            const userEmail = prompt("Microsoft Sign-In: Enter your Microsoft/Outlook Email:", "user.ms@outlook.com");
+            if (!userEmail) return;
+            const userName = prompt("Enter your Full Name:", userEmail.split("@")[0].capitalize());
+            try {
+                const res = await api.socialLogin("microsoft", userEmail, userName || "Microsoft User");
+                api.setAuth(res.access_token, res.user);
+                checkAuthState();
+            } catch (err) {
+                alert(`Microsoft Sign-In Failed: ${err.message}`);
+            }
+        });
+    }
+
+    // Helper method
+    String.prototype.capitalize = function() {
+        return this.charAt(0).toUpperCase() + this.slice(1);
+    };
+
     // Auth Form Submission
     formAuth.addEventListener("submit", async (e) => {
         e.preventDefault();
@@ -40,7 +117,14 @@ document.addEventListener("DOMContentLoaded", () => {
         const pass = document.getElementById("auth-pass").value;
 
         try {
-            const res = await api.login(email, pass);
+            let res;
+            if (authMode === "login") {
+                res = await api.login(email, pass);
+            } else {
+                const fullName = document.getElementById("auth-fullname").value || email.split("@")[0].capitalize();
+                const role = document.getElementById("auth-role").value || "PARTICIPANT";
+                res = await api.register(email, pass, fullName, role);
+            }
             api.setAuth(res.access_token, res.user);
             checkAuthState();
         } catch (err) {
