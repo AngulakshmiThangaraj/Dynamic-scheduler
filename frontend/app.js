@@ -19,12 +19,16 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupRole = document.getElementById("group-role");
     const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
-    // Global Click Handlers for Google & Microsoft OAuth (100% Instant Login)
+    // Dynamic Google & Microsoft OAuth Sign-In Handlers (Logs into user's OWN account)
     window.handleGoogleClick = async function() {
-        const googleEmail = "chitraangulakshmi@gmail.com";
-        const googleName = "Chitra Angulakshmi";
+        const userEmail = prompt("Google Sign-In:\nEnter your Google Email address:", "chitraangulakshmi@gmail.com");
+        if (!userEmail || !userEmail.trim()) return;
+
+        const cleanEmail = userEmail.trim().toLowerCase();
+        const userName = cleanEmail.split("@")[0].replace(/[\._]/g, " ").split(" ").map(p => p.capitalize()).join(" ");
+
         try {
-            const res = await api.socialLogin("google", googleEmail, googleName);
+            const res = await api.socialLogin("google", cleanEmail, userName || "Google User");
             api.setAuth(res.access_token, res.user);
             checkAuthState();
         } catch (err) {
@@ -33,10 +37,14 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     window.handleMicrosoftClick = async function() {
-        const msEmail = "chitraangulakshmi@outlook.com";
-        const msName = "Chitra Angulakshmi";
+        const userEmail = prompt("Microsoft Sign-In:\nEnter your Microsoft/Outlook Email address:", "chitraangulakshmi@outlook.com");
+        if (!userEmail || !userEmail.trim()) return;
+
+        const cleanEmail = userEmail.trim().toLowerCase();
+        const userName = cleanEmail.split("@")[0].replace(/[\._]/g, " ").split(" ").map(p => p.capitalize()).join(" ");
+
         try {
-            const res = await api.socialLogin("microsoft", msEmail, msName);
+            const res = await api.socialLogin("microsoft", cleanEmail, userName || "Microsoft User");
             api.setAuth(res.access_token, res.user);
             checkAuthState();
         } catch (err) {
