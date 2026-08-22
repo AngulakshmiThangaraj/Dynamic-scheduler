@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 # --- Helper to load and validate environment variables dynamically ---
 def get_env_var(key: str, default: str = "") -> str:
     val = os.environ.get(key, default)
-    return val.strip() if val else ""
+    return val.strip() if val else default
 
 # Dynamic Configuration Loaders
 def get_google_config():
@@ -31,7 +31,6 @@ def get_microsoft_config():
 def get_google_auth_url(state: str = "state_google") -> str:
     client_id, _, redirect_uri = get_google_config()
     
-    # Safe Diagnostic Logging (Never log secrets or full tokens)
     has_client_id = bool(client_id)
     print(f"[OAuth Diagnostic] GOOGLE_CLIENT_ID exists: {has_client_id} | Redirect URI: {redirect_uri}")
 
