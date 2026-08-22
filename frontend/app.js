@@ -19,47 +19,17 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupRole = document.getElementById("group-role");
     const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
-    // 1-Click Instant Social Account Handlers
-    window.handleGoogleOAuth = async function() {
-        try {
-            const email = prompt("🔴 Sign in with Google\n\nEnter your Google Account email:", "chitraangulakshmi@gmail.com");
-            if (!email) return;
-            const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || "Chitra Angulakshmi";
-            const loginRes = await api.socialLogin("GOOGLE", email, name);
-            api.setAuth(loginRes.access_token, loginRes.user);
-            await checkAuthState();
-            alert(`✅ Welcome ${loginRes.user.full_name}! Signed in with Google (${loginRes.user.email}).`);
-        } catch (e) {
-            alert(`Google Login Error: ${e.message}`);
-        }
+    // Standard OAuth Provider Handlers - Direct URL Navigation
+    window.handleGoogleOAuth = function() {
+        window.location.href = "/api/auth/google/login";
     };
 
-    window.handleGitHubOAuth = async function() {
-        try {
-            const email = prompt("🐱 Sign in with GitHub\n\nEnter your GitHub Account email:", "chitraangulakshmi@gmail.com");
-            if (!email) return;
-            const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || "Chitra Angulakshmi";
-            const loginRes = await api.socialLogin("GITHUB", email, name);
-            api.setAuth(loginRes.access_token, loginRes.user);
-            await checkAuthState();
-            alert(`✅ Welcome ${loginRes.user.full_name}! Signed in with GitHub (${loginRes.user.email}).`);
-        } catch (e) {
-            alert(`GitHub Login Error: ${e.message}`);
-        }
+    window.handleGitHubOAuth = function() {
+        window.location.href = "/api/auth/github/login";
     };
 
-    window.handleMicrosoftOAuth = async function() {
-        try {
-            const email = prompt("🟦 Sign in with Microsoft\n\nEnter your Microsoft Account email:", "chitraangulakshmi@outlook.com");
-            if (!email) return;
-            const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || "Chitra Angulakshmi";
-            const loginRes = await api.socialLogin("MICROSOFT", email, name);
-            api.setAuth(loginRes.access_token, loginRes.user);
-            await checkAuthState();
-            alert(`✅ Welcome ${loginRes.user.full_name}! Signed in with Microsoft (${loginRes.user.email}).`);
-        } catch (e) {
-            alert(`Microsoft Login Error: ${e.message}`);
-        }
+    window.handleMicrosoftOAuth = function() {
+        window.location.href = "/api/auth/microsoft/login";
     };
 
     // Check for Token in URL Hash from OAuth Callback Redirect
@@ -145,6 +115,9 @@ document.addEventListener("DOMContentLoaded", () => {
             groupFullname.style.display = "none";
             groupRole.style.display = "none";
             btnAuthSubmit.textContent = "Sign In";
+
+            const errDiv = document.getElementById("auth-error-msg");
+            if (errDiv) errDiv.style.display = "none";
         });
 
         tabRegister.addEventListener("click", () => {
@@ -159,6 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
             groupFullname.style.display = "block";
             groupRole.style.display = "block";
             btnAuthSubmit.textContent = "Create Account";
+
+            const errDiv = document.getElementById("auth-error-msg");
+            if (errDiv) errDiv.style.display = "none";
         });
     }
 
@@ -167,11 +143,32 @@ document.addEventListener("DOMContentLoaded", () => {
         return this.charAt(0).toUpperCase() + this.slice(1);
     };
 
-    // Auth Form Submission
+    // Auth Form Submission - Prevent Default & In-Page Form UI Validation
     formAuth.addEventListener("submit", async (e) => {
         e.preventDefault();
-        const email = document.getElementById("auth-email").value;
+        const email = document.getElementById("auth-email").value.trim();
         const pass = document.getElementById("auth-pass").value;
+
+        let errDiv = document.getElementById("auth-error-msg");
+        if (!errDiv) {
+            errDiv = document.createElement("div");
+            errDiv.id = "auth-error-msg";
+            errDiv.style.cssText = "color: #f43f5e; background: rgba(244,63,94,0.1); border: 1px solid #f43f5e; padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.75rem; display: none; text-align: center;";
+            formAuth.appendChild(errDiv);
+        }
+        errDiv.style.display = "none";
+
+        if (!email || !email.includes("@")) {
+            errDiv.textContent = "Please enter a valid email address.";
+            errDiv.style.display = "block";
+            return;
+        }
+
+        if (!pass) {
+            errDiv.textContent = "Please enter your password.";
+            errDiv.style.display = "block";
+            return;
+        }
 
         try {
             let res;
@@ -183,9 +180,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 res = await api.register(email, pass, fullName, role);
             }
             api.setAuth(res.access_token, res.user);
-            await checkAuthState();
+            await checkAuthState(); // Smoothly hides modal and routes to dashboard without popups
         } catch (err) {
-            alert(`Authentication Error: ${err.message}`);
+            errDiv.textContent = err.message || "Authentication error occurred.";
+            errDiv.style.display = "block";
         }
     });
 
@@ -352,7 +350,6 @@ document.addEventListener("DOMContentLoaded", () => {
         const ev = eventsList.find(e => e.id === eventId);
         if (!ev) return;
 
-        // Run simulation shift by +1 hour
         const [h, m] = ev.start_time.split(":").map(Number);
         const newStart = `${String((h + 1) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
         const newEnd = `${String((h + 2) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
@@ -384,7 +381,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p style="color: var(--accent-emerald);">✓ Cascading conflicts prevented: 0 new hard conflicts</p>
             `;
         } catch (e) {
-            alert(`Simulation failed: ${e.message}`);
+            console.error("Simulation error:", e);
         }
     };
 
@@ -411,13 +408,12 @@ document.addEventListener("DOMContentLoaded", () => {
         const end = document.getElementById("ev-end").value;
         const roomId = document.getElementById("ev-room").value || null;
 
-        // Calculate duration in mins
         const [sh, sm] = start.split(":").map(Number);
         const [eh, em] = end.split(":").map(Number);
         const duration = (eh * 60 + em) - (sh * 60 + sm);
 
         try {
-            const res = await api.createEvent({
+            await api.createEvent({
                 title,
                 description: desc,
                 date,
@@ -430,17 +426,10 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             modalCreate.classList.remove("active");
-
-            if (res.conflicts && res.conflicts.length > 0) {
-                alert(`⚠️ EVENT CREATED WITH CONFLICTS DETECTED!\n${res.conflicts.map(c => `- [${c.severity}] ${c.explanation}`).join("\n")}`);
-            } else {
-                alert(`✅ SUCCESS: Event '${title}' scheduled with zero conflicts!`);
-            }
-
             await refreshCalendar();
             await updateConflictBadgeCount();
         } catch (err) {
-            alert(`Error creating event: ${err.message}`);
+            console.error("Error creating event:", err);
         }
     });
 
@@ -481,13 +470,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     window.autoResolveConflict = async function(conflictId) {
         try {
-            const res = await api.resolveConflict(conflictId);
-            alert(`✅ AUTOMATIC RESOLUTION SUCCESS:\n${res.message}`);
+            await api.resolveConflict(conflictId);
             await loadConflicts();
             await refreshCalendar();
             await updateConflictBadgeCount();
         } catch (e) {
-            alert(`Resolution failed: ${e.message}`);
+            console.error("Resolution error:", e);
         }
     };
 
