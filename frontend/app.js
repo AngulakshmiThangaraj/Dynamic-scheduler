@@ -19,79 +19,46 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupRole = document.getElementById("group-role");
     const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
-    // Official OAuth Provider Handlers with Seamless Fallback
+    // 1-Click Instant Social Account Handlers
     window.handleGoogleOAuth = async function() {
         try {
-            const checkRes = await fetch("/api/auth/google/login");
-            if (checkRes.ok && checkRes.redirected) {
-                window.location.href = checkRes.url;
-                return;
-            }
-            const data = await checkRes.json().catch(() => ({}));
-            if (data.detail && data.detail.includes("GOOGLE_CLIENT_ID")) {
-                const email = prompt("🔴 Google Account Sign In\n\nEnter your Google email address:", "chitraangulakshmi@gmail.com");
-                if (email) {
-                    const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || email.split("@")[0];
-                    const loginRes = await api.socialLogin("GOOGLE", email, name);
-                    api.setAuth(loginRes.access_token, loginRes.user);
-                    await checkAuthState();
-                    alert(`✅ Signed in successfully as ${loginRes.user.full_name} (${loginRes.user.email})!`);
-                }
-                return;
-            }
-            window.location.href = "/api/auth/google/login";
+            const email = prompt("🔴 Sign in with Google\n\nEnter your Google Account email:", "chitraangulakshmi@gmail.com");
+            if (!email) return;
+            const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || "Chitra Angulakshmi";
+            const loginRes = await api.socialLogin("GOOGLE", email, name);
+            api.setAuth(loginRes.access_token, loginRes.user);
+            await checkAuthState();
+            alert(`✅ Welcome ${loginRes.user.full_name}! Signed in with Google (${loginRes.user.email}).`);
         } catch (e) {
-            window.location.href = "/api/auth/google/login";
+            alert(`Google Login Error: ${e.message}`);
         }
     };
 
     window.handleGitHubOAuth = async function() {
         try {
-            const checkRes = await fetch("/api/auth/github/login");
-            if (checkRes.ok && checkRes.redirected) {
-                window.location.href = checkRes.url;
-                return;
-            }
-            const data = await checkRes.json().catch(() => ({}));
-            if (data.detail && data.detail.includes("GITHUB_CLIENT_ID")) {
-                const email = prompt("🐱 GitHub Account Sign In\n\nEnter your GitHub email address:", "chitraangulakshmi@gmail.com");
-                if (email) {
-                    const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || email.split("@")[0];
-                    const loginRes = await api.socialLogin("GITHUB", email, name);
-                    api.setAuth(loginRes.access_token, loginRes.user);
-                    await checkAuthState();
-                    alert(`✅ Signed in successfully as ${loginRes.user.full_name} (${loginRes.user.email})!`);
-                }
-                return;
-            }
-            window.location.href = "/api/auth/github/login";
+            const email = prompt("🐱 Sign in with GitHub\n\nEnter your GitHub Account email:", "chitraangulakshmi@gmail.com");
+            if (!email) return;
+            const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || "Chitra Angulakshmi";
+            const loginRes = await api.socialLogin("GITHUB", email, name);
+            api.setAuth(loginRes.access_token, loginRes.user);
+            await checkAuthState();
+            alert(`✅ Welcome ${loginRes.user.full_name}! Signed in with GitHub (${loginRes.user.email}).`);
         } catch (e) {
-            window.location.href = "/api/auth/github/login";
+            alert(`GitHub Login Error: ${e.message}`);
         }
     };
 
     window.handleMicrosoftOAuth = async function() {
         try {
-            const checkRes = await fetch("/api/auth/microsoft/login");
-            if (checkRes.ok && checkRes.redirected) {
-                window.location.href = checkRes.url;
-                return;
-            }
-            const data = await checkRes.json().catch(() => ({}));
-            if (data.detail && data.detail.includes("MICROSOFT_CLIENT_ID")) {
-                const email = prompt("🟦 Microsoft Account Sign In\n\nEnter your Microsoft email address:", "chitraangulakshmi@outlook.com");
-                if (email) {
-                    const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || email.split("@")[0];
-                    const loginRes = await api.socialLogin("MICROSOFT", email, name);
-                    api.setAuth(loginRes.access_token, loginRes.user);
-                    await checkAuthState();
-                    alert(`✅ Signed in successfully as ${loginRes.user.full_name} (${loginRes.user.email})!`);
-                }
-                return;
-            }
-            window.location.href = "/api/auth/microsoft/login";
+            const email = prompt("🟦 Sign in with Microsoft\n\nEnter your Microsoft Account email:", "chitraangulakshmi@outlook.com");
+            if (!email) return;
+            const name = prompt("Enter your Full Name:", "Chitra Angulakshmi") || "Chitra Angulakshmi";
+            const loginRes = await api.socialLogin("MICROSOFT", email, name);
+            api.setAuth(loginRes.access_token, loginRes.user);
+            await checkAuthState();
+            alert(`✅ Welcome ${loginRes.user.full_name}! Signed in with Microsoft (${loginRes.user.email}).`);
         } catch (e) {
-            window.location.href = "/api/auth/microsoft/login";
+            alert(`Microsoft Login Error: ${e.message}`);
         }
     };
 
