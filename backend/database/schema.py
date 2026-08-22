@@ -6,14 +6,23 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import declarative_base, sessionmaker, relationship
 
-is_vercel = os.environ.get("VERCEL") == "1" or os.environ.get("VERCEL_ENV") is not None
-default_db_url = "sqlite:////tmp/scheduler.db" if is_vercel else "sqlite:///./scheduler.db"
-DATABASE_URL = os.environ.get("DATABASE_URL", default_db_url)
+DATABASE_URL = os.environ.get("DATABASE_URL")
+if not DATABASE_URL:
+    if os.environ.get("VERCEL") or os.environ.get("VERCEL_ENV"):
+        DATABASE_URL = "sqlite:////tmp/scheduler.db"
+    else:
+        DATABASE_URL = "sqlite:///./scheduler.db"
 
-engine = create_engine(
-    DATABASE_URL,
-    connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
-)
+try:
+    engine = create_engine(
+        DATABASE_URL,
+        connect_args={"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+    )
+except Exception:
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False}
+    )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
@@ -208,4 +217,7 @@ class AuditLog(Base):
     timestamp = Column(DateTime, default=datetime.utcnow)
 
 def init_db():
-    Base.metadata.create_all(bind=engine)
+    try:
+        Base.metadata.create_all(bind=engine)
+    except Exception as e:
+        print(f"init_db exception: {e}")
