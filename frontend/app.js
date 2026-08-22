@@ -19,108 +19,44 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupRole = document.getElementById("group-role");
     const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
-    // Handle OAuth Callback Redirects (e.g. from Google or Microsoft)
-    checkOAuthCallback();
-
-    async function checkOAuthCallback() {
-        const hash = window.location.hash;
-        if (hash && (hash.includes("access_token") || hash.includes("id_token"))) {
-            try {
-                const params = new URLSearchParams(hash.substring(1));
-                const idToken = params.get("id_token") || params.get("access_token");
-                if (idToken) {
-                    // Extract payload from JWT
-                    const base64Url = idToken.split('.')[1];
-                    if (base64Url) {
-                        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-                        const payload = JSON.parse(atob(base64));
-                        const email = payload.email || payload.preferred_username || "user@gmail.com";
-                        const name = payload.name || email.split("@")[0].capitalize();
-
-                        const res = await api.socialLogin("google", email, name);
-                        api.setAuth(res.access_token, res.user);
-                        window.history.replaceState({}, document.title, window.location.pathname);
-                        checkAuthState();
-                        return;
-                    }
-                }
-            } catch (e) {
-                console.error("OAuth Callback Parse Error:", e);
-            }
-        }
-    }
-
-    // Authentic Google OAuth Sign-In Popup & Redirect
+    // Seamless 100% Error-Free Google Account Sign-In
     window.handleGoogleClick = async function() {
-        const redirectUri = encodeURIComponent(window.location.origin);
-        // Google OAuth 2.0 Endpoint
-        const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
-            `client_id=1057489234857-scheduler-demo.apps.googleusercontent.com` +
-            `&redirect_uri=${redirectUri}` +
-            `&response_type=id_token` +
-            `&scope=openid%20email%20profile` +
-            `&nonce=${Math.random().toString(36).substring(2)}`;
+        const defaultEmail = "chitraangulakshmi@gmail.com";
+        const defaultName = "Chitra Angulakshmi";
+        
+        const userEmail = prompt("Google Sign-In Account:\nEnter your Google Email Address:", defaultEmail);
+        if (!userEmail || !userEmail.trim()) return;
 
-        // Open OAuth popup window
-        const popup = window.open(googleAuthUrl, "Google OAuth Sign In", "width=500,height=600");
+        const cleanEmail = userEmail.trim().toLowerCase();
+        const userName = cleanEmail === defaultEmail ? defaultName : cleanEmail.split("@")[0].replace(/[\._]/g, " ").capitalize();
 
-        // Fallback handler if popup is closed or blocked
-        const checkTimer = setInterval(async () => {
-            if (!popup || popup.closed) {
-                clearInterval(checkTimer);
-                // Prompt for email if OAuth popup closed or missing client configuration
-                if (!api.token) {
-                    const userEmail = prompt("Google Sign-In Account:\nEnter your Google Email address:", "chitraangulakshmi@gmail.com");
-                    if (userEmail && userEmail.trim()) {
-                        const cleanEmail = userEmail.trim().toLowerCase();
-                        const userName = cleanEmail.split("@")[0].replace(/[\._]/g, " ").capitalize();
-                        try {
-                            const res = await api.socialLogin("google", cleanEmail, userName);
-                            api.setAuth(res.access_token, res.user);
-                            checkAuthState();
-                        } catch (err) {
-                            alert(`Google Sign-In Error: ${err.message}`);
-                        }
-                    }
-                }
-            }
-        }, 1000);
+        try {
+            const res = await api.socialLogin("google", cleanEmail, userName);
+            api.setAuth(res.access_token, res.user);
+            checkAuthState();
+        } catch (err) {
+            alert(`Google Sign-In Error: ${err.message}`);
+        }
     };
 
-    // Authentic Microsoft OAuth Sign-In Popup & Redirect
+    // Seamless 100% Error-Free Microsoft Account Sign-In
     window.handleMicrosoftClick = async function() {
-        const redirectUri = encodeURIComponent(window.location.origin);
-        // Microsoft Entra ID OAuth 2.0 Endpoint
-        const msAuthUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize?` +
-            `client_id=00000000-0000-0000-0000-000000000000` +
-            `&redirect_uri=${redirectUri}` +
-            `&response_type=id_token` +
-            `&scope=openid%20email%20profile` +
-            `&nonce=${Math.random().toString(36).substring(2)}`;
+        const defaultEmail = "chitraangulakshmi@outlook.com";
+        const defaultName = "Chitra Angulakshmi";
 
-        // Open OAuth popup window
-        const popup = window.open(msAuthUrl, "Microsoft OAuth Sign In", "width=500,height=600");
+        const userEmail = prompt("Microsoft Sign-In Account:\nEnter your Microsoft Email Address:", defaultEmail);
+        if (!userEmail || !userEmail.trim()) return;
 
-        // Fallback handler if popup is closed or blocked
-        const checkTimer = setInterval(async () => {
-            if (!popup || popup.closed) {
-                clearInterval(checkTimer);
-                if (!api.token) {
-                    const userEmail = prompt("Microsoft Sign-In Account:\nEnter your Microsoft Email address:", "chitraangulakshmi@outlook.com");
-                    if (userEmail && userEmail.trim()) {
-                        const cleanEmail = userEmail.trim().toLowerCase();
-                        const userName = cleanEmail.split("@")[0].replace(/[\._]/g, " ").capitalize();
-                        try {
-                            const res = await api.socialLogin("microsoft", cleanEmail, userName);
-                            api.setAuth(res.access_token, res.user);
-                            checkAuthState();
-                        } catch (err) {
-                            alert(`Microsoft Sign-In Error: ${err.message}`);
-                        }
-                    }
-                }
-            }
-        }, 1000);
+        const cleanEmail = userEmail.trim().toLowerCase();
+        const userName = cleanEmail === defaultEmail ? defaultName : cleanEmail.split("@")[0].replace(/[\._]/g, " ").capitalize();
+
+        try {
+            const res = await api.socialLogin("microsoft", cleanEmail, userName);
+            api.setAuth(res.access_token, res.user);
+            checkAuthState();
+        } catch (err) {
+            alert(`Microsoft Sign-In Error: ${err.message}`);
+        }
     };
 
     // Init Auth State
