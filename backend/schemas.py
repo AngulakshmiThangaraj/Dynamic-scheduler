@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import List, Optional, Dict, Any
+from datetime import datetime
 
 # User & Auth Schemas
 class UserRegister(BaseModel):
@@ -13,9 +14,11 @@ class UserLogin(BaseModel):
     password: str
 
 class SocialLoginRequest(BaseModel):
-    provider: str  # google or microsoft
+    provider: str  # google, github, or microsoft
     email: str
     full_name: str
+    profile_image: Optional[str] = None
+    provider_user_id: Optional[str] = None
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -28,7 +31,11 @@ class UserResponse(BaseModel):
     email: str
     full_name: str
     role: str
+    profile_image: Optional[str] = None
+    auth_provider: str = "EMAIL"
+    provider_user_id: Optional[str] = None
     is_active: bool
+    last_login: Optional[datetime] = None
 
 class TokenResponse(BaseModel):
     access_token: str

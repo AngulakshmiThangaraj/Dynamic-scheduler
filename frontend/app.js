@@ -19,56 +19,77 @@ document.addEventListener("DOMContentLoaded", () => {
     const groupRole = document.getElementById("group-role");
     const btnAuthSubmit = document.getElementById("btn-auth-submit");
 
-    // Seamless 100% Error-Free Google Account Sign-In
-    window.handleGoogleClick = async function() {
-        const defaultEmail = "chitraangulakshmi@gmail.com";
-        const defaultName = "Chitra Angulakshmi";
-        
-        const userEmail = prompt("Google Sign-In Account:\nEnter your Google Email Address:", defaultEmail);
-        if (!userEmail || !userEmail.trim()) return;
-
-        const cleanEmail = userEmail.trim().toLowerCase();
-        const userName = cleanEmail === defaultEmail ? defaultName : cleanEmail.split("@")[0].replace(/[\._]/g, " ").capitalize();
-
-        try {
-            const res = await api.socialLogin("google", cleanEmail, userName);
-            api.setAuth(res.access_token, res.user);
-            checkAuthState();
-        } catch (err) {
-            alert(`Google Sign-In Error: ${err.message}`);
-        }
+    // Official OAuth Provider Redirect Handlers
+    window.handleGoogleOAuth = function() {
+        window.location.href = "/api/auth/google/login";
     };
 
-    // Seamless 100% Error-Free Microsoft Account Sign-In
-    window.handleMicrosoftClick = async function() {
-        const defaultEmail = "chitraangulakshmi@outlook.com";
-        const defaultName = "Chitra Angulakshmi";
-
-        const userEmail = prompt("Microsoft Sign-In Account:\nEnter your Microsoft Email Address:", defaultEmail);
-        if (!userEmail || !userEmail.trim()) return;
-
-        const cleanEmail = userEmail.trim().toLowerCase();
-        const userName = cleanEmail === defaultEmail ? defaultName : cleanEmail.split("@")[0].replace(/[\._]/g, " ").capitalize();
-
-        try {
-            const res = await api.socialLogin("microsoft", cleanEmail, userName);
-            api.setAuth(res.access_token, res.user);
-            checkAuthState();
-        } catch (err) {
-            alert(`Microsoft Sign-In Error: ${err.message}`);
-        }
+    window.handleGitHubOAuth = function() {
+        window.location.href = "/api/auth/github/login";
     };
+
+    window.handleMicrosoftOAuth = function() {
+        window.location.href = "/api/auth/microsoft/login";
+    };
+
+    // Check for Token in URL Hash from OAuth Callback Redirect
+    checkUrlOAuthToken();
+
+    async function checkUrlOAuthToken() {
+        const hash = window.location.hash;
+        if (hash && hash.includes("token=")) {
+            try {
+                const params = new URLSearchParams(hash.substring(1));
+                const token = params.get("token");
+                if (token) {
+                    api.token = token;
+                    localStorage.setItem("auth_token", token);
+                    const user = await api.getMe();
+                    api.setAuth(token, user);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    checkAuthState();
+                    return;
+                }
+            } catch (e) {
+                console.error("OAuth Token Fetch Error:", e);
+            }
+        }
+    }
 
     // Init Auth State
     checkAuthState();
 
-    function checkAuthState() {
-        if (api.token && api.user) {
-            modalAuth.classList.remove("active");
-            document.getElementById("user-display-name").textContent = api.user.full_name;
-            document.getElementById("user-display-role").textContent = api.user.role;
-            document.getElementById("user-avatar-initials").textContent = getInitials(api.user.full_name);
-            loadInitialData();
+    async function checkAuthState() {
+        if (api.token) {
+            try {
+                // Fetch fresh profile from backend
+                const user = await api.getMe();
+                api.setAuth(api.token, user);
+
+                modalAuth.classList.remove("active");
+                document.getElementById("user-display-name").textContent = user.full_name;
+                document.getElementById("user-display-role").textContent = user.role;
+                document.getElementById("user-display-provider").textContent = user.auth_provider || "EMAIL";
+
+                const imgElem = document.getElementById("user-avatar-img");
+                const initialsElem = document.getElementById("user-avatar-initials");
+
+                if (user.profile_image) {
+                    imgElem.src = user.profile_image;
+                    imgElem.style.display = "block";
+                    initialsElem.style.display = "none";
+                } else {
+                    imgElem.style.display = "none";
+                    initialsElem.textContent = getInitials(user.full_name);
+                    initialsElem.style.display = "block";
+                }
+
+                loadInitialData();
+            } catch (e) {
+                console.error("Auth Token Validation Failed:", e);
+                api.clearAuth();
+                modalAuth.classList.add("active");
+            }
         } else {
             modalAuth.classList.add("active");
         }
@@ -132,15 +153,18 @@ document.addEventListener("DOMContentLoaded", () => {
                 res = await api.register(email, pass, fullName, role);
             }
             api.setAuth(res.access_token, res.user);
-            checkAuthState();
+            await checkAuthState();
         } catch (err) {
             alert(`Authentication Error: ${err.message}`);
         }
     });
 
-    document.getElementById("btn-logout").addEventListener("click", () => {
+    document.getElementById("btn-logout").addEventListener("click", async () => {
+        try {
+            await api.request("/auth/logout", { method: "POST" });
+        } catch (e) {}
         api.clearAuth();
-        checkAuthState();
+        await checkAuthState();
     });
 
     // Navigation Section Switching
@@ -543,10 +567,15 @@ document.addEventListener("DOMContentLoaded", () => {
             const users = await api.getUsers();
             tbody.innerHTML = users.map(u => `
                 <tr>
-                    <td><strong>${u.full_name}</strong></td>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            ${u.profile_image ? `<img src="${u.profile_image}" style="width: 24px; height: 24px; border-radius: 50%;">` : ''}
+                            <strong>${u.full_name}</strong>
+                        </div>
+                    </td>
                     <td>${u.email}</td>
                     <td><span class="severity-badge severity-${u.role === 'ADMIN' ? 'CRITICAL' : 'MEDIUM'}">${u.role}</span></td>
-                    <td><span style="color: ${u.is_active ? 'var(--accent-emerald)' : 'var(--accent-rose)'};">● ${u.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td><span style="color: ${u.is_active ? 'var(--accent-emerald)' : 'var(--accent-rose)'};">● ${u.is_active ? 'Active' : 'Inactive'} (${u.auth_provider || 'EMAIL'})</span></td>
                 </tr>
             `).join("");
         } catch (e) {

@@ -38,8 +38,13 @@ class User(Base):
     password_hash = Column(String, nullable=False)
     full_name = Column(String, nullable=False)
     role = Column(String, default="PARTICIPANT", nullable=False)  # ADMIN, ORGANIZER, PARTICIPANT
+    profile_image = Column(String, nullable=True)
+    auth_provider = Column(String, default="EMAIL", nullable=False)  # EMAIL, GOOGLE, GITHUB, MICROSOFT
+    provider_user_id = Column(String, nullable=True, index=True)
     is_active = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    last_login = Column(DateTime, default=datetime.utcnow)
 
     organized_events = relationship("Event", back_populates="organizer", foreign_keys="Event.organizer_id")
     participations = relationship("EventParticipant", back_populates="user", cascade="all, delete-orphan")
