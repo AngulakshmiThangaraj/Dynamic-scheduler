@@ -74,8 +74,14 @@ def login(login_data: UserLogin, db: Session = Depends(get_db)):
 # --- Google OAuth Endpoints ---
 @router.get("/google/login")
 def google_login():
-    url = get_google_auth_url()
-    return RedirectResponse(url=url)
+    try:
+        url = get_google_auth_url()
+        return RedirectResponse(url=url)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(ve)
+        )
 
 @router.get("/google/callback")
 async def google_callback(code: str = Query(...), state: Optional[str] = None, db: Session = Depends(get_db)):
@@ -94,8 +100,14 @@ async def google_callback(code: str = Query(...), state: Optional[str] = None, d
 # --- GitHub OAuth Endpoints ---
 @router.get("/github/login")
 def github_login():
-    url = get_github_auth_url()
-    return RedirectResponse(url=url)
+    try:
+        url = get_github_auth_url()
+        return RedirectResponse(url=url)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(ve)
+        )
 
 @router.get("/github/callback")
 async def github_callback(code: str = Query(...), state: Optional[str] = None, db: Session = Depends(get_db)):
@@ -114,8 +126,14 @@ async def github_callback(code: str = Query(...), state: Optional[str] = None, d
 # --- Microsoft OAuth Endpoints ---
 @router.get("/microsoft/login")
 def microsoft_login():
-    url = get_microsoft_auth_url()
-    return RedirectResponse(url=url)
+    try:
+        url = get_microsoft_auth_url()
+        return RedirectResponse(url=url)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(ve)
+        )
 
 @router.get("/microsoft/callback")
 async def microsoft_callback(code: str = Query(...), state: Optional[str] = None, db: Session = Depends(get_db)):

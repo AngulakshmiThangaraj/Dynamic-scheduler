@@ -3,26 +3,44 @@ import urllib.parse
 import httpx
 from typing import Dict, Any, Optional
 
-# Google OAuth 2.0 Configuration
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "")
-GOOGLE_REDIRECT_URI = os.environ.get("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/auth/google/callback")
+# --- Helper to load and validate environment variables dynamically ---
+def get_env_var(key: str, default: str = "") -> str:
+    val = os.environ.get(key, default)
+    return val.strip() if val else ""
 
-# GitHub OAuth 2.0 Configuration
-GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
-GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
-GITHUB_REDIRECT_URI = os.environ.get("GITHUB_REDIRECT_URI", "http://localhost:8000/api/auth/github/callback")
+# Dynamic Configuration Loaders
+def get_google_config():
+    client_id = get_env_var("GOOGLE_CLIENT_ID")
+    client_secret = get_env_var("GOOGLE_CLIENT_SECRET")
+    redirect_uri = get_env_var("GOOGLE_REDIRECT_URI", "https://dynamic-scheduler-ten.vercel.app/api/auth/google/callback")
+    return client_id, client_secret, redirect_uri
 
-# Microsoft OAuth 2.0 Configuration
-MICROSOFT_CLIENT_ID = os.environ.get("MICROSOFT_CLIENT_ID", "")
-MICROSOFT_CLIENT_SECRET = os.environ.get("MICROSOFT_CLIENT_SECRET", "")
-MICROSOFT_REDIRECT_URI = os.environ.get("MICROSOFT_REDIRECT_URI", "http://localhost:8000/api/auth/microsoft/callback")
+def get_github_config():
+    client_id = get_env_var("GITHUB_CLIENT_ID")
+    client_secret = get_env_var("GITHUB_CLIENT_SECRET")
+    redirect_uri = get_env_var("GITHUB_REDIRECT_URI", "https://dynamic-scheduler-ten.vercel.app/api/auth/github/callback")
+    return client_id, client_secret, redirect_uri
+
+def get_microsoft_config():
+    client_id = get_env_var("MICROSOFT_CLIENT_ID")
+    client_secret = get_env_var("MICROSOFT_CLIENT_SECRET")
+    redirect_uri = get_env_var("MICROSOFT_REDIRECT_URI", "https://dynamic-scheduler-ten.vercel.app/api/auth/microsoft/callback")
+    return client_id, client_secret, redirect_uri
 
 # --- Google OAuth Flow ---
 def get_google_auth_url(state: str = "state_google") -> str:
+    client_id, _, redirect_uri = get_google_config()
+    
+    # Safe Diagnostic Logging (Never log secrets or full tokens)
+    has_client_id = bool(client_id)
+    print(f"[OAuth Diagnostic] GOOGLE_CLIENT_ID exists: {has_client_id} | Redirect URI: {redirect_uri}")
+
+    if not client_id:
+        raise ValueError("GOOGLE_CLIENT_ID environment variable is missing or empty. Please configure GOOGLE_CLIENT_ID in your environment settings.")
+
     params = {
-        "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": GOOGLE_REDIRECT_URI,
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "response_type": "code",
         "scope": "openid email profile",
         "access_type": "offline",
@@ -32,13 +50,17 @@ def get_google_auth_url(state: str = "state_google") -> str:
     return f"https://accounts.google.com/o/oauth2/v2/auth?{urllib.parse.urlencode(params)}"
 
 async def exchange_google_code(code: str) -> Dict[str, Any]:
+    client_id, client_secret, redirect_uri = get_google_config()
+    if not client_id or not client_secret:
+        raise ValueError("Google OAuth credentials missing on backend server.")
+
     token_url = "https://oauth2.googleapis.com/token"
     payload = {
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
+        "client_id": client_id,
+        "client_secret": client_secret,
         "code": code,
         "grant_type": "authorization_code",
-        "redirect_uri": GOOGLE_REDIRECT_URI
+        "redirect_uri": redirect_uri
     }
     async with httpx.AsyncClient() as client:
         res = await client.post(token_url, data=payload)
@@ -61,21 +83,33 @@ async def get_google_user_info(access_token: str) -> Dict[str, Any]:
 
 # --- GitHub OAuth Flow ---
 def get_github_auth_url(state: str = "state_github") -> str:
+    client_id, _, redirect_uri = get_github_config()
+    
+    has_client_id = bool(client_id)
+    print(f"[OAuth Diagnostic] GITHUB_CLIENT_ID exists: {has_client_id} | Redirect URI: {redirect_uri}")
+
+    if not client_id:
+        raise ValueError("GITHUB_CLIENT_ID environment variable is missing or empty. Please configure GITHUB_CLIENT_ID in your environment settings.")
+
     params = {
-        "client_id": GITHUB_CLIENT_ID,
-        "redirect_uri": GITHUB_REDIRECT_URI,
+        "client_id": client_id,
+        "redirect_uri": redirect_uri,
         "scope": "read:user user:email",
         "state": state
     }
     return f"https://github.com/login/oauth/authorize?{urllib.parse.urlencode(params)}"
 
 async def exchange_github_code(code: str) -> Dict[str, Any]:
+    client_id, client_secret, redirect_uri = get_github_config()
+    if not client_id or not client_secret:
+        raise ValueError("GitHub OAuth credentials missing on backend server.")
+
     token_url = "https://github.com/login/oauth/access_token"
     payload = {
-        "client_id": GITHUB_CLIENT_ID,
-        "client_secret": GITHUB_CLIENT_SECRET,
+        "client_id": client_id,
+        "client_secret": client_secret,
         "code": code,
-        "redirect_uri": GITHUB_REDIRECT_URI
+        "redirect_uri": redirect_uri
     }
     headers = {"Accept": "application/json"}
     async with httpx.AsyncClient() as client:
@@ -113,10 +147,18 @@ async def get_github_user_info(access_token: str) -> Dict[str, Any]:
 
 # --- Microsoft OAuth Flow ---
 def get_microsoft_auth_url(state: str = "state_microsoft") -> str:
+    client_id, _, redirect_uri = get_microsoft_config()
+    
+    has_client_id = bool(client_id)
+    print(f"[OAuth Diagnostic] MICROSOFT_CLIENT_ID exists: {has_client_id} | Redirect URI: {redirect_uri}")
+
+    if not client_id:
+        raise ValueError("MICROSOFT_CLIENT_ID environment variable is missing or empty. Please configure MICROSOFT_CLIENT_ID in your environment settings.")
+
     params = {
-        "client_id": MICROSOFT_CLIENT_ID,
+        "client_id": client_id,
         "response_type": "code",
-        "redirect_uri": MICROSOFT_REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "response_mode": "query",
         "scope": "openid email profile User.Read",
         "state": state
@@ -124,13 +166,17 @@ def get_microsoft_auth_url(state: str = "state_microsoft") -> str:
     return f"https://login.microsoftonline.com/common/oauth2/v2.0/authorize?{urllib.parse.urlencode(params)}"
 
 async def exchange_microsoft_code(code: str) -> Dict[str, Any]:
+    client_id, client_secret, redirect_uri = get_microsoft_config()
+    if not client_id or not client_secret:
+        raise ValueError("Microsoft OAuth credentials missing on backend server.")
+
     token_url = "https://login.microsoftonline.com/common/oauth2/v2.0/token"
     payload = {
-        "client_id": MICROSOFT_CLIENT_ID,
-        "client_secret": MICROSOFT_CLIENT_SECRET,
+        "client_id": client_id,
+        "client_secret": client_secret,
         "code": code,
         "grant_type": "authorization_code",
-        "redirect_uri": MICROSOFT_REDIRECT_URI,
+        "redirect_uri": redirect_uri,
         "scope": "openid email profile User.Read"
     }
     async with httpx.AsyncClient() as client:
